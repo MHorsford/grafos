@@ -21,7 +21,7 @@ def fleury(graph, start):
         graph[u][v] -= 1
         graph[v][u] -= 1
 
-        # Verifica se o grafo continua conectado (BFS)
+        # Verifica conectividade com DFS
         visited = set()
         stack = [u]
         while stack:
@@ -36,47 +36,44 @@ def fleury(graph, start):
         graph[u][v] += 1
         graph[v][u] += 1
 
-        # Se o vértice v não foi visitado, a aresta era essencial → ponte
+        # Se 'v' ficou inacessível, a aresta é ponte
         return v not in visited
 
-    # Cria uma cópia do grafo para não alterar o original
+    # Cria cópia segura do grafo
     from copy import deepcopy
     graph = deepcopy(graph)
 
-    # Verifica se todos os vértices têm grau par
+    # Verifica graus pares para todos os vértices
     for node in graph:
         grau = sum(graph[node].values())
         if grau % 2 != 0:
-            raise ValueError(f"O grafo não possui ciclo Euleriano: vértice '{node}' tem grau ímpar.")
+            raise ValueError(f"Grafo não Euleriano: vértice '{node}' tem grau ímpar.")
 
-    # Inicializa o caminho e o vértice atual
+    # Inicializa estruturas
     path = [start]
     current = start
-
-    # Conta o total de arestas (dividido por 2 pois é grafo não direcionado)
-    total_edges = sum(sum(neigh.values()) for neigh in graph.values()) // 2
+    total_edges = sum(sum(neigh.values()) for neigh in graph.values()) // 2  # Arestas totais
 
     for _ in range(total_edges):
-        # Pega vizinhos com arestas restantes
+        # Vizinhos com arestas disponíveis
         neighbors = [v for v in graph[current] if graph[current][v] > 0]
 
         if not neighbors:
-            break  # Nenhuma aresta disponível
+            break  # Sem arestas restantes
 
-        # Se só tem um vizinho, segue direto
+        # Escolhe estratégia baseada no número de vizinhos
         if len(neighbors) == 1:
             next_vertex = neighbors[0]
         else:
-            # Escolhe uma aresta que não seja ponte
+            # Prefere arestas que não são pontes
             for v in neighbors:
                 if not is_bridge(current, v):
                     next_vertex = v
                     break
             else:
-                # Se todas são pontes, pega a primeira mesmo
-                next_vertex = neighbors[0]
+                next_vertex = neighbors[0]  # Usa qualquer aresta se todas forem pontes
 
-        # Atualiza o caminho e remove a aresta usada
+        # Atualiza caminho e remove aresta
         path.append(next_vertex)
         graph[current][next_vertex] -= 1
         graph[next_vertex][current] -= 1
@@ -93,14 +90,14 @@ if __name__ == "__main__":
         'B': {'A': 1, 'C': 1},
         'C': {'A': 1, 'B': 1}
     }
-    print("Triângulo:", fleury(grafo_triangulo, 'A'))  # Deve retornar um ciclo completo
+    print("Triângulo:", fleury(grafo_triangulo, 'A'))  # Ex: ['A','B','C','A']
 
-    # Exemplo 2: Grafo com arestas paralelas (válido)
+    # Exemplo 2: Grafo com arestas paralelas
     grafo_paralelo = {
         'A': {'B': 2},
         'B': {'A': 2}
     }
-    print("Paralelas:", fleury(grafo_paralelo, 'A'))
+    print("Arestas Paralelas:", fleury(grafo_paralelo, 'A'))  # Ex: ['A','B','A']
 
     # Exemplo 3: Grafo inválido (graus ímpares)
     grafo_estrela = {
@@ -111,4 +108,4 @@ if __name__ == "__main__":
     try:
         print("Estrela:", fleury(grafo_estrela, 'A'))
     except ValueError as e:
-        print("Estrela:", e)  # Deve informar que não há ciclo Euleriano
+        print("Estrela:", e)  # Erro esperado
